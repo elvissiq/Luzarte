@@ -26,6 +26,6 @@ User Function M110STTS()
         U_ACOMW055(3,Nil,cNumSol)
      EndIf
   EndIf
-
+  
   RestArea(aArea)   
 Return 
