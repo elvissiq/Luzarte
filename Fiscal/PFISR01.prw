@@ -37,8 +37,8 @@ Static Function GeraExcel()
 
 Local oExcel
 Local oLeft,oCenter,oQuebraTxt,oEstiloB,oEstiloBN,oEstiloLef
-Local oFundoCinza,oFundoBranc,oEstiloCent,oEstiloCenN,oFmtNum,oFmtNumN
-Local nCorCinza,nCorBranc,nAri10,nAri10N,nCali11N,nFmtNum
+Local oFundoCinza,oFundoBranc,oFundoAmarelo,oFundoAzul,oFundoVerde,oEstiloCent,oEstiloCenN,oFmtNum,oFmtNumN
+Local nCorCinza,nCorBranc,nCorAmarelo,nCorAzul,nCorVerde,nAri10,nAri10N,nCali11N,nFmtNum
 Local nBordaAll,nIdImg,nLin
 Local cPerFisc := "Periodo Fiscal: "+Upper(MesExtenso(Val(SubSTR(SZG->ZG_PERIODO,1,2))))+Alltrim(SubSTR(SZG->ZG_PERIODO,3))
 Local cNomeEmp := UPPER(Alltrim(FWSM0Util():GetSM0Data( cEmpAnt , cFilAnt , { "M0_NOMECOM" } )[1][2]))
@@ -63,6 +63,9 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 	oExcel	:= YExcel():new("PFISR01"+FWTimeStamp(1))
     nCorCinza   := oExcel:CorPreenc("CCCCCC")	//Cor de Fundo Cinza
     nCorBranc   := oExcel:CorPreenc("FFFFFF")	//Cor de Fundo Branca
+    nCorAmarelo := oExcel:CorPreenc("FFFF00")	//Cor de Fundo Amarelo
+    nCorAzul    := oExcel:CorPreenc("00B0F0")	//Cor de Fundo Azul
+    nCorVerde   := oExcel:CorPreenc("92D050")	//Cor de Fundo Verde
 	oLeft	    := oExcel:Alinhamento("left","center")
     oCenter	    := oExcel:Alinhamento("center","center")
 	oQuebraTxt	:= oExcel:Alinhamento("center","center",,.T.)
@@ -83,6 +86,9 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
 	oFundoCinza	:= oExcel:NewStyle():Setfont(nCali11N):Setfill(nCorCinza):SetaValores({oCenter})
 	oFundoBranc	:= oExcel:NewStyle():Setfill(nCorBranc)
+    oFundoAzul	:= oExcel:NewStyle():Setfill(nCorAzul):SetFont(nAri10N):SetaValores({oCenter}):Setborder(nBordaAll)
+    oFundoVerde	:= oExcel:NewStyle():Setfill(nCorVerde):SetFont(nAri10N):SetaValores({oCenter}):Setborder(nBordaAll)
+    oFundoAmarelo := oExcel:NewStyle():Setfill(nCorAmarelo):SetFont(nAri10N):SetaValores({oCenter}):Setborder(nBordaAll)
 
 	oExcel:ADDPlan("APURACAO INCENTIVADA - "+Upper(SubSTR(MesExtenso(Val(SubSTR(SZG->ZG_PERIODO,1,2))),1,3))+"."+Alltrim(SubSTR(SZG->ZG_PERIODO,3)))
 	
@@ -97,7 +103,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 	//imagem
 	If File(CurDir()+"logoprodepe_"+Alltrim(cFilAnt)+".png")
 		nIDImg		:= oExcel:ADDImg(CurDir()+"logoprodepe_"+Alltrim(cFilAnt)+".png")	//Imagem no Protheus_data
-		oExcel:Img(nIDImg,1,8,250,095,"px",)
+		oExcel:Img(nIDImg,1,2,250,095,"px",)
 	EndIf
 
     nLin := 6
@@ -134,7 +140,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Entradas"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Entradas"):SetStyle(oFundoAmarelo)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -195,7 +201,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Saídas"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Saídas"):SetStyle(oFundoVerde)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -248,7 +254,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Apuração"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Apuração"):SetStyle(oFundoAzul)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -277,7 +283,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " WHERE SF1.D_E_L_E_T_ <> '*' "
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE ='NF3E' "
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -310,7 +316,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " WHERE SF1.D_E_L_E_T_ <> '*' "
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE ='CTE' "
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -352,7 +358,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE ='NF3E' "
     cQry += " AND	SF1.F1_EST     = '"+cEstado+"' " 
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -386,7 +392,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE ='NF3E' "
     cQry += " AND	SF1.F1_EST     <> '"+cEstado+"' " 
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -578,7 +584,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     /*                                                                       */
     /*-----------------------------------------------------------------------*/
 
-    oExcel:ADDPlan("APURACAO NAO INCENTIVADA"+Upper(SubSTR(MesExtenso(Val(SubSTR(SZG->ZG_PERIODO,1,2))),1,3))+"."+Alltrim(SubSTR(SZG->ZG_PERIODO,3)))
+    oExcel:ADDPlan("APURACAO NAO INCENTIVADA "+Upper(SubSTR(MesExtenso(Val(SubSTR(SZG->ZG_PERIODO,1,2))),1,3))+"."+Alltrim(SubSTR(SZG->ZG_PERIODO,3)))
 	
 	oExcel:Pos(1,17):SetStyle(oFundoBranc)
     oExcel:mergeCells(1,1,5,5) //Mescla
@@ -591,7 +597,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 	//imagem
 	If File(CurDir()+"logoprodepe_"+Alltrim(cFilAnt)+".png")
 		nIDImg		:= oExcel:ADDImg(CurDir()+"logoprodepe_"+Alltrim(cFilAnt)+".png")	//Imagem no Protheus_data
-		oExcel:Img(nIDImg,1,8,250,095,"px",)
+		oExcel:Img(nIDImg,1,2,250,095,"px",)
 	EndIf
 
     nLin := 6
@@ -628,7 +634,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Entradas"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Entradas"):SetStyle(oFundoAmarelo)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -689,7 +695,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Saídas"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Saídas"):SetStyle(oFundoVerde)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -742,7 +748,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
 
     nLin += 1
     oExcel:mergeCells(nLin,1,nLin,5)
-    oExcel:Pos(nLin,1):SetValue("Apuração"):SetStyle(oEstiloBN)
+    oExcel:Pos(nLin,1):SetValue("Apuração"):SetStyle(oFundoAzul)
     oExcel:Pos(nLin,2):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,3):SetStyle(oEstiloBN)
     oExcel:Pos(nLin,4):SetStyle(oEstiloBN)
@@ -771,7 +777,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " WHERE SF1.D_E_L_E_T_ <> '*' "
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE ='CTE' "
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -804,7 +810,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " WHERE SF1.D_E_L_E_T_ <> '*' "
     cQry += " AND	SF1.F1_FILIAL  = '"+FwxFilial('SF1')+"' " 
     cQry += " AND	SF1.F1_ESPECIE = 'NF3E' "
-    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SF1.F1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -842,7 +848,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " AND	SB1.B1_FILIAL  = '"+FwxFilial('SB1')+"' "
     cQry += " AND	SB1.B1_TIPO    = 'MP' "
     cQry += " AND	SD1.D1_TIPO    = 'D' "
-    cQry += " AND	SD1.D1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SD1.D1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
@@ -880,7 +886,7 @@ Local __cAlias := "TEMP"+FWTimeStamp(1)
     cQry += " AND	SB1.B1_FILIAL  = '"+FwxFilial('SB1')+"' "
     cQry += " AND	SB1.B1_TIPO    = 'MC' "
     cQry += " AND	SD1.D1_TIPO    = 'D' "
-    cQry += " AND	SD1.D1_EMISSAO BETWEEN '"+ZG_DATAINI+"' AND "+ "'"+ZG_DATAFIM+"' "
+    cQry += " AND	SD1.D1_EMISSAO BETWEEN '"+DToS(SZG->ZG_DATAINI)+"' AND "+ "'"+DToS(SZG->ZG_DATAFIM)+"' "
     cQry := ChangeQuery(cQry)
     IF Select(__cAlias) <> 0
         (__cAlias)->(DbCloseArea())
