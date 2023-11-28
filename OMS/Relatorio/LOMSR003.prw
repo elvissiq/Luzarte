@@ -9,15 +9,15 @@
 #define PAD_RIGHT		1
 #define PAD_CENTER   	2
 
-/*/{Protheus.doc} LOMSR002
+/*/{Protheus.doc} LOMSR003
 Relatório Fluxo Financeiro de Viagem Romaneio Luzarte
 @type function
 @version
 @author TOTVS Nordeste
-@since 22/11/2023
+@since 23/11/2023
 @return 
 /*/
-User Function LOMSR002()
+User Function LOMSR003()
     Local aArea    := FWGetArea()
     
     Private cBarra   := IIF(GetRemoteType() == 1,"\","/")
@@ -25,13 +25,13 @@ User Function LOMSR002()
     Private cDirArq  := ""
     Private oProcess
     
-    If Pergunte( "LOMSR002" , .T. , "Perguntas - Relatório Fluxo Financeiro de Viagem Romaneio" )
+    If Pergunte( "LOMSR003" , .T. , "Perguntas - Relatório Fluxo Financeiro de Viagem Romaneio" )
         cDirArq := TFileDialog("Arquivos Adobe PDF (*.pdf)",'Informe onde será gravado o arquivo.',,,.T.,/*GETF_MULTISELECT*/)
         cNomArq := SubSTR(cDirArq,RAT(cBarra,cDirArq)+1,Rat(".",SubSTR(cDirArq,RAT(cBarra,cDirArq)+1))-1)
         cDirArq := SubSTR(cDirArq,1,RAT(cBarra,cDirArq))
         
         If !Empty(cDirArq) .AND. !Empty(cNomArq)
-            oProcess := MsNewProcess():New({|| fLOMSR002()}, "Processando...", "Aguarde...", .T.)
+            oProcess := MsNewProcess():New({|| fLOMSR003()}, "Processando...", "Aguarde...", .T.)
             oProcess:Activate()
         EndIf 
     EndIF 
@@ -41,11 +41,11 @@ User Function LOMSR002()
 Return
 
 /*---------------------------------------------------------------------*
- | Func:  fLOMSR002                                                    |
+ | Func:  fLOMSR003                                                    |
  | Desc:  Impressão do relatório                                       |
  | Obs.:  /                                                            |
  *---------------------------------------------------------------------*/
-Static Function fLOMSR002()
+Static Function fLOMSR003()
     
     Local nAtual := 0
     Local nTotal := 0
@@ -95,7 +95,7 @@ Static Function fLOMSR002()
             nAtual++
             oProcess:IncRegua1("Carga " + cValToChar(nAtual) + " de " + cValToChar(nTotal) + "...")
 
-            fCabec() //Imprime o Cabeçalho
+            fCabec((cAliasDAK)->(DAK_COD)) //Imprime o Cabeçalho
             fNFiscais((cAliasDAK)->(DAK_COD)) //Imprime as Notas Fiscais da Carga
             
         (cAliasDAK)->(DBSkip())
@@ -105,7 +105,7 @@ Static Function fLOMSR002()
         ms_flush()
 
     Else
-        FWAlertWarning("Nenhuma informação encontrada com os parâmetros informados.",'Parâmetros da pergunta "LOMSR002"')
+        FWAlertWarning("Nenhuma informação encontrada com os parâmetros informados.",'Parâmetros da pergunta "LOMSR003"')
     EndIF
 
     If Select((cAliasDAK)) <> 0
@@ -119,9 +119,33 @@ Return
  | Desc:  Imprime o cabeçalho do relatório                             |
  | Obs.:  /                                                            |
  *---------------------------------------------------------------------*/
-Static Function fCabec()
-    
+Static Function fCabec(pCodCarga)
+    Local aMDFe     := {}
+    Local cAliasSF2 := GetNextAlias()
+    Local cQry      := ""
     Local cNomeEmp  := Upper(Alltrim(FWSM0Util():GetSM0Data( cEmpAnt , cFilAnt , { "M0_NOMECOM" } )[1][2]))
+
+    cQry := " SELECT * "
+    cQry += " FROM " + RetSqlName("SF2") + " SF2 " 
+    cQry += "   WHERE SF2.D_E_L_E_T_ <> '*'"
+    cQry += "     AND SF2.F2_FILIAL  = '" + xFilial("SF2") + "'"
+    cQry += "     AND SF2.F2_CARGA  = '" + pCodCarga + "' "
+    cQry += "     AND SF2.F2_VEND1 BETWEEN '" + MV_PAR02 + "' AND '" + MV_PAR03 + "' "
+    cQry := ChangeQuery(cQry)
+    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQry),cAliasSF2,.F.,.T.)
+
+    While !(cAliasSF2)->(Eof())
+        If !Empty((cAliasSF2)->F2_NUMMDF)
+            IF Empty(aScan(aMDFe, {|x| x == Alltrim((cAliasSF2)->F2_NUMMDF) }))
+                aAdd(aMDFe,Alltrim((cAliasSF2)->F2_NUMMDF))
+            EndIf 
+        EndIF 
+    (cAliasSF2)->(DBSkip())
+    EndDo
+    
+    If Select((cAliasDAK)) <> 0
+		(cAliasSF2)->(DbCloseArea())
+	Endif
 
     nLin := 35
     nCol := 5
@@ -142,7 +166,7 @@ Static Function fCabec()
     oPrint:SayAlign(nLin, nCol+450, "Numero do Lacre: ", oFont12B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
     nLin += 10
     oPrint:SayAlign(nLin, nCol, "Placa: "+Alltrim(Posicione("DA3",1,FWxFilial("DA3")+(cAliasDAK)->DAK_CAMINH,"DA3_PLACA")), oFont12B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
-    oPrint:SayAlign(nLin, nCol+450, "Num. Manifesto...: ", oFont12B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
+    oPrint:SayAlign(nLin, nCol+450, "Num. Manifesto...: "+ArrTokStr(aMDFe, ","), oFont12B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
     nLin += 30
     oPrint:SayAlign(nLin, nCol    , "NF"          , oFont10B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
     oPrint:SayAlign(nLin, nCol+045, "DATA"        , oFont10B, 280, /*nHeigth*/, CLR_BLACK , PAD_LEFT, PAD_LEFT)
@@ -184,7 +208,7 @@ Static Function fNFiscais(pCodCarga)
     cQry := " SELECT * "
     cQry += " FROM " + RetSqlName("SF2") + " SF2 " 
     cQry += "   WHERE SF2.D_E_L_E_T_ <> '*'"
-    cQry += "     AND SF2.F2_FILIAL  = '" + xFilial("SE1") + "'"
+    cQry += "     AND SF2.F2_FILIAL  = '" + xFilial("SF2") + "'"
     cQry += "     AND SF2.F2_CARGA  = '" + pCodCarga + "' "
     cQry := ChangeQuery(cQry)
     dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQry),cAliasSF2,.F.,.T.)
