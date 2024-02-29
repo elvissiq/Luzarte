@@ -328,10 +328,15 @@ Local cSerie     as Character
 Local cItem	     as Character
 Local cCod       as Character
 Local cDesc      as Character
+Local cNumAux    as Character
+Local cPreAux    as Character
+Local cCliAux    as Character
+Local cLojAux    as Character
 Local nQtd       as Numeric
 Local nValIt     as Numeric
 Local ntotal     as Numeric
 Local nComis1    as Numeric
+Local lItem	     as Logical
 	
 	dEmissao 	:= CTOD( "" ) 
 	nTotLiq  	:= 0
@@ -362,6 +367,7 @@ Local nComis1    as Numeric
 	cFilSA1   	:= "" 
 	lVend	    := .F.
 	lFirst    	:= .F.
+	lItem       := .F.
 	lRndIrrf 	:= GetMV("MV_RNDIRF")
 	lUseOffBal  := FindFunction("RskIsActive") .And. RskIsActive()	
 	aSelect 	:= {}
@@ -617,9 +623,33 @@ Else
 		EndSql
 	END REPORT QUERY oDetalhe 
 
+	cWhere := ""
+
+	If mv_par01 == 1
+		cWhere += "AND E3_BAIEMI <> 'B'"  //Baseado pela emissao da NF
+	Elseif mv_par01 == 2
+		cWhere += "AND E3_BAIEMI =  'B'"  //Baseado pela baixa do titulo
+	EndIf
+	If mv_par06 == 1 		//Comissoes a pagar
+		cWhere += "AND E3_DATA = '" + Dtos(Ctod("")) + "'"
+	ElseIf mv_par06 == 2 //Comissoes pagas
+		cWhere += "AND E3_DATA <> '" + Dtos(Ctod("")) + "'"
+	Endif
+	If ValType(mv_par15) == "N"
+		If mv_par15 <> 1 // Todos
+			If mv_par15 == 2 // Parceiros
+				cWhere += "AND A3_TIPO = 'P'"
+			ElseIf mv_par15 == 3 // Vendedores
+				cWhere += "AND A3_TIPO <> 'P'"
+			EndIf
+		EndIf
+	EndIf
+	cWhere += " ORDER BY D2_DOC, D2_SERIE, D2_ITEM "
+	cWhere := "%" + cWhere + "%"
+
 	BEGIN REPORT QUERY oItensNF
 		BeginSql Alias cAliasItens
-		SELECT E3_FILIAL,E3_BASE, E3_COMIS, E3_VEND, E3_PORC, A3_NOME, E3_PREFIXO,E3_NUM, E3_PARCELA,E3_TIPO,E3_CODCLI,E3_LOJA,E3_AJUSTE,E3_BAIEMI,E3_EMISSAO,E3_DATA,E3_PEDIDO,E3_SEQ,
+		SELECT DISTINCT E3_FILIAL,E3_BASE, E3_COMIS, E3_VEND, E3_PORC, A3_NOME, E3_PREFIXO,E3_NUM, E3_TIPO,E3_CODCLI,E3_LOJA,E3_AJUSTE,E3_BAIEMI,E3_EMISSAO,E3_DATA,E3_PEDIDO,E3_SEQ,
 			   D2_DOC, D2_SERIE, D2_ITEM, D2_COD, D2_UM, D2_QUANT, D2_PRCVEN, D2_TOTAL, D2_COMIS1, D2_CLIENTE, D2_LOJA, B1_DESC
 			FROM %table:SE3% SE3
 			LEFT JOIN %table:SA3% SA3
@@ -889,27 +919,44 @@ While !oReport:Cancel() .And. !&(cAlias)->(Eof())
 					oReport:Section(1):Section(1):Section(1):Finish()
 				EndIf
 			Endif
-
-			dbSelectArea(cAliasItens)
-			While !(cAliasItens)->(EoF()) .AND. (cAlias)->E3_NUM == (cAliasItens)->D2_DOC .AND. (cAlias)->E3_PREFIXO == (cAliasItens)->D2_SERIE;
-				   .AND. (cAlias)->E3_CODCLI ==  (cAliasItens)->D2_CLIENTE .AND. (cAlias)->E3_LOJA == (cAliasItens)->D2_LOJA
-				cDoc    := (cAliasItens)->D2_DOC
-				cSerie  := (cAliasItens)->D2_SERIE
-				cItem	:= (cAliasItens)->D2_ITEM
-				cCod    := (cAliasItens)->D2_COD
-				cDesc   := (cAliasItens)->B1_DESC
-				nQtd    := (cAliasItens)->D2_QUANT
-				nValIt  := (cAliasItens)->D2_QUANT
-				ntotal  := (cAliasItens)->D2_TOTAL
-				nComis1 := (cAliasItens)->D2_COMIS1
-				nComIt  := ((cAliasItens)->D2_TOTAL * ((cAliasItens)->D2_COMIS1/100))
-				oReport:Section(1):Section(2):SetHeaderBreak(.T.)
-				oReport:Section(1):Section(2):Init()
-				oReport:Section(1):Section(2):PrintLine()
-			(cAliasItens)->(DbSkip())
-			EndDo 
+ 
 		EndIf
 		
+		If cNumAux != (cAlias)->E3_NUM
+
+			If lItem 
+				dbSelectArea(cAliasItens)
+				(cAliasItens)->(dbGoTop())
+				While !(cAliasItens)->(EoF())
+					If cNumAux == (cAliasItens)->D2_DOC .AND. cPreAux == (cAliasItens)->D2_SERIE;
+						.AND. cCliAux ==  (cAliasItens)->D2_CLIENTE .AND. cLojAux == (cAliasItens)->D2_LOJA
+						cDoc    := (cAliasItens)->D2_DOC
+						cSerie  := (cAliasItens)->D2_SERIE
+						cItem	:= (cAliasItens)->D2_ITEM
+						cCod    := (cAliasItens)->D2_COD
+						cDesc   := (cAliasItens)->B1_DESC
+						nQtd    := (cAliasItens)->D2_QUANT
+						nValIt  := (cAliasItens)->D2_PRCVEN
+						ntotal  := (cAliasItens)->D2_TOTAL
+						nComis1 := (cAliasItens)->D2_COMIS1
+						nComIt  := ((cAliasItens)->D2_TOTAL * ((cAliasItens)->D2_COMIS1/100))
+						oReport:Section(1):Section(2):SetHeaderBreak(.T.)
+						oReport:Section(1):Section(2):Init()
+						oReport:Section(1):Section(2):PrintLine()
+					EndIF
+					(cAliasItens)->(DbSkip())
+				EndDo
+				lItem := .F.
+			EndIF 
+
+			cNumAux := (cAlias)->E3_NUM
+			cPreAux := (cAlias)->E3_PREFIXO
+			cCliAux := (cAlias)->E3_CODCLI
+			cLojAux := (cAlias)->E3_LOJA
+			lItem := .T.			
+
+		EndIF 
+
 		nAc1 += nBasePrt
 		nAc2 += nComPrt
 		nTotPerVen += (nBasePrt*(cAlias)->E3_PORC)/100
