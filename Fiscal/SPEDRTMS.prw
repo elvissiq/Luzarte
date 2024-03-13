@@ -180,9 +180,11 @@ User Function SPEDRTMS()
    
         DbSelectArea("SF3")
         SF3->(DBSetOrder(1))
-        SF3->(DBSeek(XFilial("SF3") + DtoS(aCmpAntSFT[6]) + aCmpAntSFT[1] + aCmpAntSFT[2] + aCmpAntSFT[3] + aCmpAntSFT[4]))
-   
-        vValBSICM := LTrim(Transform(F3_VALCONT, "@E 99999999.99"))
+        IF SF3->(DBSeek(XFilial("SF3") + DtoS(aCmpAntSFT[5]) + aCmpAntSFT[1] + aCmpAntSFT[2] + aCmpAntSFT[3] + aCmpAntSFT[4]))
+            vValBSICM := LTrim(Transform(SF3->F3_BASEICM, "@E 99999999.99"))
+        Else 
+            vValBSICM := "0,00"
+        EndIF 
    
         AAdd(vLinha,    "D100")         //01 REG
         AAdd(vLinha,    cInd_Oper)      //02 IND_OPER
